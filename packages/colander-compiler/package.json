@@ -1,0 +1,109 @@
+{
+  "name": "@ailura/colander-compiler",
+  "version": "0.1.0",
+  "description": "Build-time component compiler that turns the Colander core's semantic types into a consumer-owned component tree.",
+  "keywords": [
+    "build-time",
+    "codegen",
+    "colander",
+    "component compiler",
+    "forms"
+  ],
+  "license": "MIT",
+  "bin": {
+    "colander": "./bin/colander.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./contracts": {
+      "types": "./dist/contracts.d.ts",
+      "import": "./dist/contracts.js",
+      "default": "./dist/contracts.js"
+    },
+    "./discover": {
+      "types": "./dist/discover.d.ts",
+      "import": "./dist/discover.js",
+      "default": "./dist/discover.js"
+    },
+    "./host": {
+      "types": "./dist/host.d.ts",
+      "import": "./dist/host.js",
+      "default": "./dist/host.js"
+    },
+    "./plan": {
+      "types": "./dist/plan.d.ts",
+      "import": "./dist/plan.js",
+      "default": "./dist/plan.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js",
+      "default": "./dist/runtime.js"
+    },
+    "./utilities": {
+      "types": "./dist/utilities.d.ts",
+      "import": "./dist/utilities.js",
+      "default": "./dist/utilities.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "audit": "node ../../scripts/audit-package.mjs",
+    "build": "tsc -p tsconfig.build.json",
+    "check": "pnpm run fmt:check && pnpm run lint && pnpm run typecheck",
+    "check:fix": "pnpm run fmt && pnpm run lint -- --fix && pnpm run typecheck",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "fmt": "vp fmt",
+    "fmt:check": "vp fmt --check",
+    "lint": "vp lint",
+    "prepack": "pnpm run clean && pnpm run build",
+    "test": "pnpm run test:unit",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit"
+  },
+  "dependencies": {
+    "@ailura/colander-client": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "typescript": "^5.9.2",
+    "vite-plus": "1.0.0-rc.0",
+    "vitest": "5.0.1"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^22.18.0 || ^24.11.0 || >=26.0.0",
+      "onFail": "error"
+    }
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "packageManager": "pnpm@12.3.4"
+}

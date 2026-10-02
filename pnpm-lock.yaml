@@ -114,17 +114,88 @@ importers:
   .:
     devDependencies:
       '@types/node':
+        specifier: ^24.13.6
+        version: 24.13.6
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite-plus:
+        specifier: 1.0.0-rc.0
+        version: 1.0.0-rc.0(@types/node@24.13.6)(@vitest/ui@5.0.1)(typescript@5.9.3)
+
+  packages/colander:
+    devDependencies:
+      '@types/node':
         specifier: ^24.0.0
         version: 24.13.6
-      tar:
-        specifier: 7.5.22
-        version: 7.5.22
       typescript:
         specifier: ^5.9.2
         version: 5.9.3
       vite-plus:
         specifier: 1.0.0-rc.0
         version: 1.0.0-rc.0(@types/node@24.13.6)(@vitest/ui@5.0.1)(typescript@5.9.3)
+
+  packages/colander-browser:
+    dependencies:
+      '@ailura/colander':
+        specifier: workspace:*
+        version: link:../colander
+      '@ailura/colander-client':
+        specifier: workspace:*
+        version: link:../colander-client
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.6
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      vite-plus:
+        specifier: 1.0.0-rc.0
+        version: 1.0.0-rc.0(@types/node@24.13.6)(@vitest/ui@5.0.1)(typescript@5.9.3)
+      vitest:
+        specifier: 5.0.1
+        version: 5.0.1(@types/node@24.13.6)(@vitest/browser-preview@5.0.1)(@vitest/ui@5.0.1)(@voidzero-dev/vite-plus-core@1.0.0-rc.0(@types/node@24.13.6)(typescript@5.9.3))
+
+  packages/colander-client:
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.6
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      vite-plus:
+        specifier: 1.0.0-rc.0
+        version: 1.0.0-rc.0(@types/node@24.13.6)(@vitest/ui@5.0.1)(typescript@5.9.3)
+      vitest:
+        specifier: 5.0.1
+        version: 5.0.1(@types/node@24.13.6)(@vitest/browser-preview@5.0.1)(@vitest/ui@5.0.1)(@voidzero-dev/vite-plus-core@1.0.0-rc.0(@types/node@24.13.6)(typescript@5.9.3))
+
+  packages/colander-compiler:
+    dependencies:
+      '@ailura/colander-client':
+        specifier: workspace:^
+        version: link:../colander-client
+      react:
+        specifier: '>=18'
+        version: 19.3.0
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.6
+      '@types/react':
+        specifier: ^19.2.0
+        version: 19.3.0
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      vite-plus:
+        specifier: 1.0.0-rc.0
+        version: 1.0.0-rc.0(@types/node@24.13.6)(@vitest/ui@5.0.1)(typescript@5.9.3)
+      vitest:
+        specifier: 5.0.1
+        version: 5.0.1(@types/node@24.13.6)(@vitest/browser-preview@5.0.1)(@vitest/ui@5.0.1)(@voidzero-dev/vite-plus-core@1.0.0-rc.0(@types/node@24.13.6)(typescript@5.9.3))
 
 packages:
 
@@ -142,10 +213,6 @@ packages:
 
   '@blazediff/core@1.10.0':
     resolution: {integrity: sha512-AOQff0zgR7cGsZL+4E7hVkmujoPUpm0J9xzWGWZj5wCjd3gmxESXAPfKyuzs93VdpQNFhHlBhfOjrcZ+XTERtQ==}
-
-  '@isaacs/fs-minipass@4.0.1':
-    resolution: {integrity: sha512-wgm9Ehl2jpeqP3zw/7mo3kRHFp5MEDhqAdwy1fTGkHAwnkGOVsgpvQhL8B5n1qlb01jV3n/bI0ZfZp5lWA1k4w==}
-    engines: {node: '>=18.0.0'}
 
   '@jridgewell/resolve-uri@3.1.2':
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
@@ -470,6 +537,9 @@ packages:
   '@types/node@24.13.6':
     resolution: {integrity: sha512-SGrw/h3KPFshy3OE6ZL53LMBG5vGQQ8/gIpiqz/kRZhPJ7HgwCEs8LBuNtWLa8dvGZVpSF7+Bf+c11HUrCb/yg==}
 
+  '@types/react@19.3.0':
+    resolution: {integrity: sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==}
+
   '@vitest/browser-preview@5.0.1':
     resolution: {integrity: sha512-NagNnZD6A8ccl+pycLWX2b/e9YJtH5NuDUyiiadQjptMRuZVBAB9r9I3itdKm6exxtcl+rOTv2rWt6vu5uOm1A==}
     peerDependencies:
@@ -771,12 +841,11 @@ packages:
     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==}
     engines: {node: '>=18'}
 
-  chownr@3.0.0:
-    resolution: {integrity: sha512-+IxzY9BZOQd/XuYPRmrvEVjF/nqj5kgT4kEq7VofrDoM1MxoRjEWkrCC3EtLi59TVawxTAn+orJwFQcrqEN1+g==}
-    engines: {node: '>=18'}
-
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+
+  csstype@3.2.3:
+    resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
 
   dequal@2.0.3:
     resolution: {integrity: sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA==}
@@ -903,14 +972,6 @@ packages:
   magic-string@1.4.1:
     resolution: {integrity: sha512-8lyCu36ErXR0J9uaGKlKQoiLZKmtI63YGLE8G2o9jyRPdr4X47LusSOwgOJOzcVtp81fTAAjxR7BwKz682Jhow==}
 
-  minipass@7.1.3:
-    resolution: {integrity: sha512-tEBHqDnIoM/1rXME1zgka9g6Q2lcoCkxHLuc7ODJ5BxbP5d4c2Z5cGgtXAku59200Cx7diuHTOYfSBD8n6mm8A==}
-    engines: {node: '>=16 || 14 >=14.17'}
-
-  minizlib@3.1.0:
-    resolution: {integrity: sha512-KZxYo1BUkWD2TVFLr0MQoM8vUUigWD3LlD83a/75BqC+4qE0Hb1Vo5v1FgcfaNXvfXzr+5EhQ6ing/CaBijTlw==}
-    engines: {node: '>= 18'}
-
   mrmime@2.0.1:
     resolution: {integrity: sha512-Y3wQdFg2Va6etvQ5I82yUhGdsKrcYox6p7FfL1LbK2J4V01F9TGlepTIhnK24t7koZibmg82KGglhA1XK5IsLQ==}
     engines: {node: '>=10'}
@@ -979,6 +1040,10 @@ packages:
   react-is@17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
 
+  react@19.3.0:
+    resolution: {integrity: sha512-E8LUcbtBWt20bbl2YoHfx4ZDBdxVTfOKtCZn9cDSJ4l6/nuoApcpIBcj47t2wZoVX8g2ZHuMHbiShgCR1T5Sog==}
+    engines: {node: '>=0.10.0'}
+
   siginfo@2.0.0:
     resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
 
@@ -995,10 +1060,6 @@ packages:
 
   std-env@4.2.0:
     resolution: {integrity: sha512-oCUKSupKTHX53EyjDtuZQ64pjLJ6yYCtpmEw0goYxtjG9KpbRe8KAsl2tBUGU9DyMcJ0RwJ8GqJAFzMXcXW1Rw==}
-
-  tar@7.5.22:
-    resolution: {integrity: sha512-MFO/QzvtAOmJbkhOaCTvbGcFN9L9b+JunIsDwaKljSOdcLMea3NJ1k9Usz/rjdfSXTq4dfzfeS7W4p4YOAAHeA==}
-    engines: {node: '>=18'}
 
   tinybench@6.1.4:
     resolution: {integrity: sha512-9APumHG7r4yOk4X4WlkmE71aZcv1gvin1czO3OQ1U9iJcFA5Ja/ygyb0vPOVHTthFozUYs8CLoLUlM8grb2lTQ==}
@@ -1103,10 +1164,6 @@ packages:
       utf-8-validate:
         optional: true
 
-  yallist@5.0.0:
-    resolution: {integrity: sha512-YgvUTfwqyc7UXVMrB+SImsVYSmTS8X/tSrtdNZMImM+n7+QTriRXyXim0mBrTXNeqzVF0KWGgHPeiyViFFrNDw==}
-    engines: {node: '>=18'}
-
   yuku-ast@0.9.5:
     resolution: {integrity: sha512-Q8qW8WwQnN5Cm0ZZivdRIfv0sRLTjUq0YumXJkw8CYN1aCdICH9rk4C47/4n6kA5EqDtlj+F608twoTSV2MwdQ==}
 
@@ -1129,10 +1186,6 @@ snapshots:
   '@babel/runtime@7.29.7': {}
 
   '@blazediff/core@1.10.0': {}
-
-  '@isaacs/fs-minipass@4.0.1':
-    dependencies:
-      minipass: 7.1.3
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
@@ -1312,6 +1365,10 @@ snapshots:
   '@types/node@24.13.6':
     dependencies:
       undici-types: 7.18.2
+
+  '@types/react@19.3.0':
+    dependencies:
+      csstype: 3.2.3
 
   '@vitest/browser-preview@5.0.1(@voidzero-dev/vite-plus-core@1.0.0-rc.0(@types/node@24.13.6)(typescript@5.9.3))(vitest@5.0.1)':
     dependencies:
@@ -1512,9 +1569,9 @@ snapshots:
 
   chai@6.2.2: {}
 
-  chownr@3.0.0: {}
-
   convert-source-map@2.0.0: {}
+
+  csstype@3.2.3: {}
 
   dequal@2.0.3: {}
 
@@ -1597,12 +1654,6 @@ snapshots:
   magic-string@1.4.1:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
-
-  minipass@7.1.3: {}
-
-  minizlib@3.1.0:
-    dependencies:
-      minipass: 7.1.3
 
   mrmime@2.0.1: {}
 
@@ -1690,6 +1741,8 @@ snapshots:
 
   react-is@17.0.2: {}
 
+  react@19.3.0: {}
+
   siginfo@2.0.0: {}
 
   sirv@3.0.2:
@@ -1703,14 +1756,6 @@ snapshots:
   stackback@0.0.2: {}
 
   std-env@4.2.0: {}
-
-  tar@7.5.22:
-    dependencies:
-      '@isaacs/fs-minipass': 4.0.1
-      chownr: 3.0.0
-      minipass: 7.1.3
-      minizlib: 3.1.0
-      yallist: 5.0.0
 
   tinybench@6.1.4: {}
 
@@ -1815,8 +1860,6 @@ snapshots:
       stackback: 0.0.2
 
   ws@8.21.3: {}
-
-  yallist@5.0.0: {}
 
   yuku-ast@0.9.5:
     dependencies:

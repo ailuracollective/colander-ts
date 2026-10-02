@@ -1,0 +1,70 @@
+{
+  "form": {
+    "schemaVersion": "1.0.0",
+    "fields": [
+      {
+        "id": "systolic",
+        "code": "vital.bp.systolic",
+        "type": "integer"
+      },
+      {
+        "id": "diastolic",
+        "code": "vital.bp.diastolic",
+        "type": "integer"
+      }
+    ]
+  },
+  "rules": {
+    "schemaVersion": "1.0.0",
+    "formSchemaVersion": "1.0.0",
+    "fields": {},
+    "validations": [
+      {
+        "code": "BP_SYSTOLIC_GT_DIASTOLIC",
+        "message": "Systolic must be greater than diastolic",
+        "when": {
+          "op": "and",
+          "args": [
+            {
+              "op": "not",
+              "args": [
+                {
+                  "op": "empty",
+                  "args": [
+                    {
+                      "ref": "vital.bp.systolic"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "not",
+              "args": [
+                {
+                  "op": "empty",
+                  "args": [
+                    {
+                      "ref": "vital.bp.diastolic"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "assert": {
+          "op": "gt",
+          "args": [
+            {
+              "ref": "vital.bp.systolic"
+            },
+            {
+              "ref": "vital.bp.diastolic"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "core": {
+    "name": "colander",
+    "version": "1.0.0",
+    "abi": 1
+  },
+  "source": {
+    "repositoryLabel": "colander sibling repository",
+    "commit": "d54a86eb755c8878f75a47c7ec5a6bc82c239bba",
+    "describe": "v1.0.0-1-gd54a86e",
+    "artifactSha256": "659ae04ac004546a82d14daf10364b7c14759aa7e5b4496bf9f84ba230139712",
+    "note": "Built with the origin mechanism: COLANDER_WASM_SOURCE=path:<checkout of this commit> pnpm run build:wasm:release, with COLANDER_WASM_SHA256 set to artifactSha256. The commit is the v1.0.0 release commit plus the single follow-up fix that scopes the D-4 nesting check to repeaters (sibling PR #24), so the provenance chain is closed: there is no local patch. crates.io has no colander version, and the v1.0.0 GitHub release publishes only libcolander.so, so neither remote origin can supply the engine. See odd/tasks/repin-engine-1-0-0-github-release.md."
+  },
+  "vectorsRecordedFrom": {
+    "repositoryLabel": "colander sibling repository",
+    "commit": "80c8f358f33983efe6aad46f753db28321934938",
+    "describe": "v0.1.0-37-g80c8f35",
+    "note": "The five vector files are the frozen record and were NOT re-recorded. They come from this older revision and are replayed against the `core` above, which is the revision the vendored wasm was built from. `files` therefore pins the vectors, not the binary."
+  },
+  "files": {
+    "hash.json": {
+      "sha256": "7da1e0a6341d26816fab92103b410425e070e0f54a39071af8f696afeda51a27",
+      "records": 9
+    },
+    "semver.json": {
+      "sha256": "fe9b626dbd01ae03d3b79912173814770d58913012d3528cd063c0dc1b0f43b5",
+      "records": 28
+    },
+    "validate.json": {
+      "sha256": "42b3b1aa9078538764886ddd6e26c6302d0695a41c9c399c49738afcca5b2a7c",
+      "records": 67
+    },
+    "compile.json": {
+      "sha256": "2a92d00beaafc2bd0355ca261a5d1a6614d8394dda32fa35f4af50024de4edb0",
+      "records": 30
+    },
+    "rules.json": {
+      "sha256": "7b8d157cf123bba2f68569e0f62a619a6168378a78316ad06d49ca7544cdb254",
+      "records": 67
+    }
+  },
+  "replayExclusions": {
+    "hash": [],
+    "semver": [],
+    "validate": [
+      {
+        "name": "choice-allow-multiple-array-answer",
+        "reason": "The published ABI does not support nested answer arrays."
+      },
+      {
+        "name": "choice-allow-multiple-invalid-member",
+        "reason": "The published ABI does not support nested answer arrays."
+      },
+      {
+        "name": "group-not-an-object-answer-key",
+        "reason": "The published ABI does not support nested answer objects."
+      }
+    ],
+    "validateErrors": [
+      {
+        "name": "rules-unknown-field-id",
+        "reason": "The packed core revision accepts this case while the locked corpus records an error."
+      }
+    ],
+    "compile": [],
+    "rules": [
+      {
+        "name": "empty-json-array-value",
+        "reason": "The recorded failure belongs to the test helper, not the published evaluator ABI."
+      },
+      {
+        "name": "values-with-nested-array",
+        "reason": "The recorded failure belongs to the test helper, not the published evaluator ABI."
+      },
+      {
+        "name": "values-with-nested-object",
+        "reason": "The recorded failure belongs to the test helper, not the published evaluator ABI."
+      }
+    ]
+  },
+  "replayInventory": {
+    "hash": 8,
+    "semver": 5,
+    "validate": 58,
+    "validateErrors": 5,
+    "compile": 13,
+    "rules": 34
+  }
+}

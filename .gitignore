@@ -1,7 +1,56 @@
+# Dependencies
 node_modules/
+
+# Environment. `.env.example` is the one that is meant to be committed.
+.env
+.env.*
+!.env.example
+
+# Build output, at any depth.
 dist/
 *.tsbuildinfo
-.idea/
+
+# The tree `colander generate` writes. It is a build artifact: a consumer
+# reproduces it with one command, and committing it only creates a second copy
+# to keep in step.
+.colander/
+
+# Packaging artifacts. `scripts/bootstrap-consumers.mjs` no longer writes tarballs, but `pack` can.
 *.tgz
-.codegraph/
+artifacts/
+
+# Agent and tool state. These are local to a machine and reappear on every session.
+.pi/
 .atl/
+.codegraph/
+
+# Editor state.
+.idea/
+.vscode/
+
+# `examples/` and `odd/` are versioned.
+#
+# They used to be ignored here, on the grounds that the examples are isolated
+# consumers and the feature documents are local planning state. The dynamic form
+# system lives in `examples/nest-app` and is rendered by `examples/react-app`, so
+# neither tree is a throwaway consumer any more: a change to the form system is
+# a change to the product.
+#
+# The consequence that was accepted with the old rule is now gone with it:
+# `scripts/bootstrap-consumers.mjs` installs each example with
+# `--offline --frozen-lockfile`, which only worked where those examples already
+# existed on disk. A fresh clone can now run the consumer audit in CI.
+
+# Local databases. The SQLite file is state, not source.
+examples/*/data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Test runner caches.
+.vitest/
+
+# Editor and OS noise.
+.DS_Store
+*.sw?

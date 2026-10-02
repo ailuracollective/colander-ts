@@ -1,0 +1,51 @@
+{
+  "form": {
+    "schemaVersion": "1.0.0",
+    "fields": [
+      {
+        "id": "weight-kg",
+        "code": "body.weight.kg",
+        "type": "number"
+      },
+      {
+        "id": "height-m",
+        "code": "body.height.m",
+        "type": "number"
+      },
+      {
+        "id": "bmi",
+        "code": "body.bmi",
+        "type": "number",
+        "readOnly": true,
+        "multipleOf": 0.01
+      }
+    ]
+  },
+  "rules": {
+    "schemaVersion": "1.0.0",
+    "formSchemaVersion": "1.0.0",
+    "fields": {
+      "bmi": {
+        "calculate": {
+          "op": "div",
+          "args": [
+            {
+              "ref": "body.weight.kg"
+            },
+            {
+              "op": "mul",
+              "args": [
+                {
+                  "ref": "body.height.m"
+                },
+                {
+                  "ref": "body.height.m"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

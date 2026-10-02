@@ -3,7 +3,7 @@
 ## Objective
 
 Create an isolated `poc/` project inside the repository that installs the locally packed
-`@ailuracode/colander` archive and exercises its public API as a real Node consumer.
+`@ailura/colander` archive and exercises its public API as a real Node consumer.
 
 ## Problem
 
@@ -21,7 +21,7 @@ standalone POC is needed to catch packaging and WASM-loading regressions.
 
 ## Constraints
 
-- Test the package as `@ailuracode/colander` through the tarball, not through a workspace link or
+- Test the package as `@ailura/colander` through the tarball, not through a workspace link or
   source import.
 - Keep the consumer ESM-only and require Node 20 or newer.
 - Keep the POC deterministic: no network calls or hidden global state.
@@ -41,7 +41,7 @@ standalone POC is needed to catch packaging and WASM-loading regressions.
 
 ## Acceptance criteria
 
-- `poc/package.json` installs the local `ailuracode-colander-0.1.0.tgz` archive.
+- `poc/package.json` installs the local `ailura-colander-0.1.0.tgz` archive.
 - `node consumer.mjs` exits with code 0 and prints the package identity plus a successful scenario.
 - The consumer imports only the public package name and demonstrates at least one valid and one
   invalid response outcome.
@@ -72,5 +72,5 @@ standalone POC is needed to catch packaging and WASM-loading regressions.
 Feature document created before the first source write. The implementation and verification evidence
 will be added after each work unit.
 
-- T1 implemented and checked: `poc/package.json` is private ESM, requires Node `>=20`, uses `pnpm@12.3.4`, defines `smoke`, and depends on `file:../ailuracode-colander-0.1.0.tgz`. Manifest contract check passed.
-- T2 implemented and checked: `poc/consumer.mjs` imports the public package, verifies `colander@0.1.0` and ABI 1, compiles a deterministic form, evaluates a BMI rule, accepts a valid response, and rejects `CALCULATED_VALUE_MISMATCH`. `node --check` and the package-backed smoke run both passed.
+- T1 implemented and checked: `poc/package.json` is private ESM, requires Node `>=20`, uses `pnpm@12.3.4`, defines `smoke`, and depends on `file:../ailura-colander-0.1.0.tgz`. Manifest contract check passed.
+- The historical core-only POC record is superseded for the active remediation by [`packages-dx-hardening.md`](packages-dx-hardening.md). The current `poc/` scaffold is the single packed consumer and now covers all three package archives, declarations, dependency direction, and both core/browser WASM loading paths.
