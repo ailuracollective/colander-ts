@@ -1,0 +1,7 @@
+packages:
+  - "."
+
+# Local-only: the machine's pnpm enforces a 24h minimum release age, and the
+# lockfile pins `ws@8.22.0`, published inside that window. Drop this once the
+# lockfile is regenerated on a machine that can resolve it.
+minimumReleaseAge: 0

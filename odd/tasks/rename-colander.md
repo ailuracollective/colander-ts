@@ -9,7 +9,7 @@ pipeline, tests, package metadata, lockfile, and documentation.
 ## Completed scope
 
 - [x] **T1 — Migrate public API and ABI.** The package is named
-  `@ailuracode/colander`; the public loader is `colander.load()` and returns an
+  `@ailura/colander`; the public loader is `colander.load()` and returns an
   object with the existing method surface. No compatibility class is exported.
   All C ABI calls use the `colander_*` symbols, and there is no last-panic
   dependency.

@@ -1,0 +1,67 @@
+{
+  "name": "@ailura/colander",
+  "version": "0.1.0",
+  "description": "TypeScript bindings for the colander form core, over WebAssembly.",
+  "keywords": [
+    "colander",
+    "forms",
+    "json-schema",
+    "validation",
+    "webassembly"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "wasm",
+    "README.md"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "audit": "node ../../scripts/audit-package.mjs",
+    "build": "vp pack",
+    "build:release": "pnpm run build:wasm && pnpm run build && pnpm run audit",
+    "build:wasm": "node --env-file-if-exists=../../.env scripts/build-wasm.mjs",
+    "build:wasm:release": "node --env-file-if-exists=../../.env scripts/build-wasm.mjs --require-digest",
+    "check": "vp check",
+    "check:fix": "vp check --fix",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "fmt": "vp fmt",
+    "fmt:check": "vp fmt --check",
+    "lint": "vp lint",
+    "prepack": "pnpm run clean && pnpm run build",
+    "release:pack": "pnpm run build:wasm:release && pnpm run build && pnpm run audit",
+    "test": "pnpm run test:unit",
+    "test:contract": "vp test test/contract-corpus.test.ts test/vectors.test.ts",
+    "test:unit": "vp test test/abi-parity.test.ts test/binding.test.ts test/loader-path.test.ts test/wasm-engine-source.test.ts test/build-wasm.test.ts test/git-source.test.ts",
+    "test:watch": "vp test watch",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.2",
+    "vite-plus": "1.0.0-rc.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^22.18.0 || ^24.11.0 || >=26.0.0",
+      "onFail": "error"
+    }
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "packageManager": "pnpm@12.3.4"
+}

@@ -1,376 +1,242 @@
-# @ailuracode/colander
+# Colander monorepo
 
-The TypeScript binding for **colander**, the form core written in Rust and compiled to WebAssembly.
+This repository is a private pnpm workspace for four publishable Colander packages and two isolated
+consumer examples.
 
-```ts
-import { colander } from "@ailuracode/colander";
+| Package                     | Path                                                       | Owner                                                                       |
+| --------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `@ailura/colander`          | [`packages/colander`](packages/colander)                   | TypeScript/WASM binding, `colander.load()`, and `wasm/colander.wasm`        |
+| `@ailura/colander-client`   | [`packages/colander-client`](packages/colander-client)     | Source-neutral transport, neutral errors, and headless form-model contracts |
+| `@ailura/colander-browser`  | [`packages/colander-browser`](packages/colander-browser)   | Canonical browser lifecycle adapter around the core                         |
+| `@ailura/colander-compiler` | [`packages/colander-compiler`](packages/colander-compiler) | Build-time compiler from the core's semantic types to a consumer-owned tree |
 
-const core = await colander.load();
+The examples remain separate pnpm workspaces. `poc/` is the single packed-package consumer smoke
+project; it is not a second application scaffold.
 
-const compiled = core.compile({ formSchemaJson });
-console.log(compiled.contentHash);
-```
+## Quick path
 
-The package is a boundary, not a reimplementation: it marshals requests, turns the ABI's failure
-envelope into a `ColanderError`, and hands back ordinary objects. Everything the core computes lives
-in `colander`.
-
-The core is the published Rust crate [`colander@0.1.0`](https://crates.io/crates/colander/0.1.0),
-compiled to an import-free WebAssembly module. This package ships `wasm/colander.wasm` and does
-**not** depend on a separate WebAssembly npm package.
-
-## Contents
-
-- [Install](#install)
-- [Toolchain](#toolchain)
-- [Quick start](#quick-start)
-- [The six operations](#the-six-operations)
-- [Two conventions that are easy to get wrong](#two-conventions-that-are-easy-to-get-wrong)
-- [Failures](#failures)
-- [Loading the module yourself](#loading-the-module-yourself)
-- [Building the WebAssembly artifact](#building-the-webassembly-artifact)
-- [Tests and packaging](#tests-and-packaging)
-- [Why WebAssembly](#why-webassembly)
-
-## Install
-
-The package metadata is named `@ailuracode/colander`. This workspace does not assume that the
-package is already present in a registry. To install a local checkout, build the library with Vite+
-and create the package archive:
+From the repository root:
 
 ```bash
-pnpm exec vp pack
-pnpm pack
-pnpm add ./ailuracode-colander-0.1.0.tgz
+pnpm install --frozen-lockfile
+pnpm run build
+pnpm run typecheck
+pnpm run lint
+pnpm run fmt:check
+pnpm run test
+pnpm run pack
 ```
 
-Once published, the same package can be installed by name:
+`pnpm run audit` is the check that runs on every change, and it is part of `pnpm run check`. It
+proves two things per package. The manifest half: every `main`, `types` and `exports` target exists
+on disk, `files` covers it, and the core ships its WebAssembly asset. The registry half: npm itself
+agrees, asked with `npm pack --dry-run --json`, and every required entry is in the list it would
+publish. It writes no file and touches no network.
+
+**This repository produces no `.tgz`, and does not need to.** `npm publish` builds the archive
+itself from the package directory, so a local archive was never an input to publishing; it was an
+intermediate that nobody consumed and that made every `dist` rebuild invalidate the tarball digest
+in the consumers' lockfiles.
+
+`pnpm run pack` is therefore the pre-publication gate rather than a producer: it builds every
+package and audits all four manifests. Each package's `prepack` lifecycle removes only its generated
+`dist` before rebuilding it, so stale output cannot enter a release, and `npm publish` runs that
+same lifecycle. To see exactly what a publish would send without sending it:
 
 ```bash
-pnpm add @ailuracode/colander
+npm publish --dry-run    # from a package directory
 ```
 
-Node 20 or newer is required. The package has no runtime dependencies; the artifact is plain data
-with no install step.
+Ordinary builds do not rebuild WASM: they use the checked-in `packages/colander/wasm/colander.wasm`
+package input and require no network access.
 
-## Toolchain
-
-The repository-local Vite+ toolchain is pinned to `vite-plus@1.0.0-rc.0`. pnpm remains the package
-manager and the explicit TypeScript command remains available for consumer-facing type checks; Vite+
-owns formatting, linting, type-aware checking, tests, task execution, and library packaging.
+To verify the isolated consumers:
 
 ```bash
-pnpm exec vp check --fix
-pnpm exec vp check
-pnpm exec vp lint
-pnpm exec vp fmt
-pnpm exec vp fmt --check
-pnpm typecheck
-pnpm exec vp test
-pnpm exec vp pack
+pnpm run bootstrap
+# equivalent alias:
+pnpm run verify
 ```
 
-Tests import their runner from `vite-plus/test`. The root `vite.config.ts` keeps the complete Oxlint
-category/plugin set enabled with denied warnings, zero warning budget, unused-suppression reporting,
-and type-aware lint/type checking.
+The bootstrap command audits the manifests, builds the workspace, and then installs, builds and
+tests each consumer offline: Nest including `test:e2e`, React, and the React SSR check. The
+consumers are linked to the packages by directory (`link:../../packages/<name>`), deliberately
+outside this workspace so each keeps its own toolchain and lockfile. A link still resolves through
+the package's own `exports`, so a consumer imports `dist` and not the source: the published shape is
+what gets exercised, and rebuilding a package does not change a consumer lockfile.
 
-## Quick start
+## Workspace commands
 
-```ts
-import { colander } from "@ailuracode/colander";
+The root commands use an explicit package matrix. A missing required package script is an error;
+capabilities are never silently skipped.
 
-const core = await colander.load();
+| Command                        | Coverage                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| `pnpm run build`               | `build` for core, client, browser, and compiler                            |
+| `pnpm run check` / `check:fix` | package format, lint, and type gates                                       |
+| `pnpm run fmt` / `fmt:check`   | package formatting                                                         |
+| `pnpm run lint`                | package lint                                                               |
+| `pnpm run test`                | package unit suites                                                        |
+| `pnpm run test:unit`           | explicit unit suites, including the core binding boundary                  |
+| `pnpm run test:contract`       | required frozen-vector contract suite                                      |
+| `pnpm run typecheck`           | package test/type configurations                                           |
+| `pnpm run pack`                | build, declaration generation, and all four publish manifests              |
+| `pnpm run test:bundler`        | React production build and emitted WASM asset smoke                        |
+| `pnpm run clean`               | generated `dist` directories only; it never removes the core WASM artifact |
 
-const compiled = core.compile({ formSchemaJson });
-// → { formSchemaJson, uiSchemaJson, rulesSchemaJson, dependencyMetadataJson, contentHash }
+## Frozen contract corpus
 
-const state = core.evaluateRules({
-  formSchemaJson: compiled.formSchemaJson,
-  rulesSchemaJson: compiled.rulesSchemaJson!,
-  values: { "patient.weight": 70 },
-});
-// → { visibility, enabled, required, calculatedValues, validationErrors }
+`pnpm run test:contract` is reproducible offline. It uses the checked-in corpus and adjacent lock at
+`packages/colander/test/fixtures/contract-vectors/colander-0.1.0/` by default. The sibling source is
+identified in that lock as `colander sibling repository`, commit
+`80c8f358f33983efe6aad46f753db28321934938`, describe `v0.1.0-37-g80c8f35`; no repository URL is
+invented.
 
-const outcome = core.validateResponse({
-  formSchemaJson: compiled.formSchemaJson,
-  answersJson: JSON.stringify(answers),
-  mode: "Complete",
-});
-// → { normalizedAnswersJson, errors, isValid }
-```
+The suite's first case is the corpus preflight: it verifies the lock, all five file SHA-256 values,
+JSON arrays, raw record counts, replay inventory, and every explicit ABI-boundary exclusion. A
+missing, malformed, non-array, digest-mismatched, or stale exclusion fails with the affected path
+and reason, so the contract run stops there rather than replaying vectors it cannot trust. There is
+no automatic fallback to a mutable sibling checkout. `COLANDER_VECTORS` is only an explicit
+override; its `corpus.lock.json` must be in the override directory, and no parent or sibling lock is
+searched.
 
-The public loader is the lowercase `colander` object. There is no compatibility class or alias.
+To refresh the corpus, make an explicit core/corpus version decision, copy the five files without
+record transformations, update `corpus.lock.json` and its replay counts/exclusions together, then
+run `pnpm run test:contract` before using the new corpus.
 
-## The six operations
+## Offline and release packaging
 
-Every entry point takes a request object and returns a result object. The ABI has eleven symbols;
-six of them are whole operations, and the rest are covered below.
+The ordinary local path is offline and uses the checked-in `packages/colander/wasm/colander.wasm`
+input owned by the core package. Every publishable package's `prepack` lifecycle removes only its
+own `dist` before TypeScript/build output is generated, so stale output cannot silently become a
+release artifact. No archive is written at any point: a `.tgz` is the npm registry's format, and
+`npm publish` produces it from the package directory, so the repository has nothing to build,
+consume, or keep in sync.
 
-### `compile` — expand, canonicalize, hash
-
-```ts
-const compiled = core.compile({
-  formSchemaJson,
-  uiSchemaJson, // optional
-  rulesSchemaJson, // optional
-  // Optional, and the interesting part: the caller supplies the component versions.
-  components: [
-    {
-      code: "patient-demographics",
-      version: "1.0.0",
-      formSchemaJson: componentFormJson,
-      uiSchemaJson: componentUiJson,
-    },
-  ],
-});
-```
-
-There is **no component repository**. Elsewhere the compiler reads published component versions from
-storage; here the caller hands them in and the core expands the `component-ref` fields from that
-set. It keeps the core pure — no I/O, no callbacks — and it means "published" is whatever the caller
-decided to pass.
-
-`compiled.contentHash` is what identifies the form version. It is a SHA-256 over the compiled
-triple, and two forms hash the same exactly when they compile to the same documents.
-
-### `evaluateRules` — the live-form call
-
-```ts
-const evaluated = core.evaluateRules({
-  formSchemaJson: compiled.formSchemaJson,
-  rulesSchemaJson: compiled.rulesSchemaJson!,
-  uiSchemaJson: compiled.uiSchemaJson ?? undefined,
-  values: { "patient.weight": 70 }, // keyed by field code
-});
-
-for (const [fieldId, visible] of Object.entries(evaluated.visibility)) {
-  // …
-}
-```
-
-Call this on every keystroke: it answers which fields are visible, enabled and required, and what
-the calculated fields work out to. It does **not** validate — that is `validateResponse`. Every
-field appears in the three boolean maps, whether or not it has a rule.
-
-### `validateResponse` — the acceptance call
-
-```ts
-const validation = core.validateResponse({
-  formSchemaJson: compiled.formSchemaJson,
-  rulesSchemaJson: compiled.rulesSchemaJson ?? undefined,
-  answersJson,
-  mode: "Complete",
-});
-
-if (!validation.isValid) {
-  for (const error of validation.errors) {
-    console.log(`${error.path}: ${error.message}`);
-  }
-}
-```
-
-A rejected answer is **not** an exception. `validation.errors` is the answer, `isValid` is the
-shortcut, and `normalizedAnswersJson` is the values that were accepted, converted to their declared
-types. `mode` is `"Draft"` (the default) or `"Complete"`; absent or blank `rulesSchemaJson` means
-"no rules", which cannot raise a version mismatch.
-
-An `error.path` is a JSON pointer to the field's location **in the form schema**, not in the
-answers. Two exceptions: an unknown answer key reports `/answers/<key>`, and a failed cross-field
-validation reports `/rules/validations`.
-
-### `validateSchema` — the one method that answers instead of throwing
-
-```ts
-const check = core.validateSchema({
-  kind: "form",
-  formSchemaJson,
-  uiSchemaJson,
-  rulesSchemaJson,
-  schemas: { formSchema: formJsonSchemaText },
-});
-
-if (!check.valid) {
-  console.log(check.message);
-}
-```
-
-colander ships no schemas: `schemas` carries the text of whichever ones the call needs, named after
-the document each one validates — `formSchema`, `uiSchema` and `rulesSchema` for `kind: "form"`, and
-`workflowSchema` for `kind: "workflow"`. `kind` is `"form"` (the default), `"component"`,
-`"workflow"` or `"instance"`; the `"instance"` case needs no `schemas` entry, takes `schemaJson` and
-`instanceJson`, and lets `label` name the document in error messages (default `"instance"`). This is
-the only method that does not throw on a bad document, because "invalid" is a validator's ordinary
-answer — but a trap still throws, since a bug in the core is not an opinion about your document.
-
-For `kind: "form"` this also runs the rule dependency check, the only place the `RULE_*` codes
-surface.
-
-### `contentHash` — hash a triple with no compilation
-
-```ts
-const digest = core.contentHash({ formSchemaJson, uiSchemaJson, rulesSchemaJson });
-```
-
-Pinned byte for byte to a canonical serialization: key order, escaping and number literals all feed
-the digest. Whitespace does not; key order does.
-
-### `nextVersion` — the next patch above everything published
-
-```ts
-const next = core.nextVersion({ published: ["1.10.0", "1.9.9"] });
-// "1.10.1"
-```
-
-The parser is deliberately permissive and is **not** semver-strict: `1..0.0` and `01.0.0` are
-accepted, `1.0.0-beta` is rejected. With nothing published — `published` absent or not an array —
-the answer is `"1.0.0"`.
-
-### The rest of the ABI
-
-```ts
-core.versionInfo(); // { name, version, abi }
-core.abiVersion; // 1
-```
-
-The module exports eleven symbols. The binding drives `colander_alloc`, `colander_free_buffer` and
-`colander_free_string` internally: the host has no allocator for the guest's heap, so the guest
-hands one out and the host copies the request into linear memory by hand. Those three are **not**
-part of the public API; the JSON entry points, `versionInfo` and the `abiVersion` property are. A
-module that does not expose the documented ABI is rejected at load time rather than failing on the
-first call.
-
-## Two conventions that are easy to get wrong
-
-**Documents travel as JSON text.** Every `…Json` field is a `string` holding JSON, not a parsed
-object. The core preserves number literals and the content hash covers the bytes, so round-tripping
-a document through `JSON.parse`/`JSON.stringify` on the way in is usually a bug: `1.50` becomes
-`1.5` and key order can change, and the hash moves.
-
-**Field ids and field codes are different keys.** The rule evaluation says so:
-
-| what                                | keyed by       |
-| ----------------------------------- | -------------- |
-| `values` you pass in                | field **code** |
-| `calculatedValues`                  | field **code** |
-| `visibility`, `enabled`, `required` | field **id**   |
-
-If a map comes back empty, this is almost always why.
-
-## Failures
-
-Every method except `validateSchema` throws `ColanderError` when the core returns a failure
-envelope:
-
-```ts
-import { ColanderError, colander } from "@ailuracode/colander";
-
-try {
-  const core = await colander.load();
-  core.compile({ formSchemaJson });
-} catch (error) {
-  if (error instanceof ColanderError && error.kind === "validation") {
-    // The core read the request and said no. The message is meant for whoever
-    // filled the form in.
-  }
-}
-```
-
-| `kind`              | means                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `"invalid_request"` | The envelope was unusable — a bug in this binding, not in your data, because the binding builds the envelope. |
-| `"validation"`      | The core read the request and rejected the payload. The ordinary "no".                                        |
-| `"panic"`           | A bug in the core. The message carries the panic text.                                                        |
-
-**Message wording is not part of the contract.** It is colander's own and may change; match on
-`kind`, or on the `code` of a `ValidationError`/`ResponseError`, never on the text.
-
-A caught Rust panic is returned as a normal typed error envelope. A real WebAssembly trap is
-different: it bypasses the envelope, and the binding reports the host trap text, retires that
-instance, and rejects later calls. Load a fresh instance after a trap:
-
-```ts
-let core = await colander.load();
-try {
-  core.evaluateRules(request);
-} catch (error) {
-  if (error instanceof ColanderError && error.kind === "panic") {
-    core = await colander.load();
-  }
-}
-```
-
-## Loading the module yourself
-
-`colander.load()` reads the bundled `wasm/colander.wasm` through
-`new URL("../wasm/colander.wasm", import.meta.url)`. It reads from disk under Node and uses `fetch`
-elsewhere, so the same package works in browsers and Workers. To control the bytes instead:
-
-```ts
-const core = await colander.load(bytes); // ArrayBuffer or Uint8Array
-const compiledCore = await colander.load(await WebAssembly.compile(bytes));
-```
-
-Pass a `WebAssembly.Module` to skip compilation on every load. This is useful in a Worker or under a
-CSP that disallows `WebAssembly.compile`.
-
-## Building the WebAssembly artifact
-
-Install Rust, the target, and the repository's pinned pnpm dependencies once:
+WASM rebuild is a separate release operation because it may download and compile Rust sources:
 
 ```bash
-pnpm install
-rustup target add wasm32-unknown-unknown
+pnpm run release:pack
 ```
 
-Then run the standard-library-only build script:
+That command runs the core `build:wasm:release` lifecycle explicitly, which additionally requires an
+engine digest. Use `pnpm run pack` for ordinary local packaging and consumer verification.
+
+## Engine origin
+
+`pnpm run build:wasm` chooses where the engine comes from through the environment, and it will not
+guess: `COLANDER_WASM_SOURCE` is required, because no remote origin can currently supply a
+WebAssembly engine.
+
+| Variable               | Required | Meaning                                                                              |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------ |
+| `COLANDER_WASM_SOURCE` | yes      | Origin spec. Unset or blank is an error that names the accepted forms.               |
+| `COLANDER_WASM_SHA256` | no       | Expected SHA-256 (64 hex characters) of the produced engine artifact.                |
+| `COLANDER_WASM_OUTPUT` | no       | Destination file. Defaults to the checked-in `packages/colander/wasm/colander.wasm`. |
+
+The spec grammar is `<origin>:<reference>`:
 
 ```bash
-pnpm exec vpr build:wasm
+# Git repository: export one commit read-only, then compile the crate at its root
+COLANDER_WASM_SOURCE=git:../colander@d54a86e pnpm run build:wasm
+
+# GitHub: download the prebuilt release asset; no Rust toolchain and no source build
+COLANDER_WASM_SOURCE=github:ailuracollective/colander@v1.0.0 pnpm run build:wasm
+COLANDER_WASM_SOURCE=github:ailuracollective/colander@v1.0.0!colander-rc.wasm pnpm run build:wasm
+
+# Local path: fully offline, either a built engine or a crate directory
+COLANDER_WASM_SOURCE=path:../colander-rs/target/wasm32-unknown-unknown/release/colander.wasm pnpm run build:wasm
+COLANDER_WASM_SOURCE=path:../colander-rs pnpm run build:wasm
 ```
 
-The script downloads the exact `colander` 0.1.0 archive from crates.io and verifies this SHA-256
-before inspecting or extracting it:
+Origin rules:
+
+- `git:<repository>@<ref>` accepts a local path or a URL and a commit, tag, or branch. A local
+  repository is exported with `git archive` into a temporary directory, so its working tree, index,
+  and refs are never touched; a remote is fetched shallowly into the same temporary space. The
+  revision must be the crate root, or a tree whose entire content is one crate directory.
+- `github:<owner>/<repo>@<release-tag>[!<asset>]` downloads
+  `https://github.com/<owner>/<repo>/releases/download/<tag>/<asset>`. The tag must be a release tag
+  such as `v1.2.3`; a branch or commit is rejected. The default asset is `colander.wasm`.
+- `path:<target>` never touches the network. A target ending in `.wasm` is validated and copied; any
+  other target must be a directory containing `Cargo.toml` and is compiled with cargo. Relative
+  paths resolve against the current working directory.
+
+Neither remote origin can supply the engine today. The `v1.0.0` release of
+`ailuracollective/colander` publishes only `libcolander.so`, so a `github:` origin asking for
+`colander.wasm` answers `404`; and `colander` was never published on crates.io, which is why there
+is no `crate:` origin at all and no default. Build the engine from a local checkout with the `path`
+or `git` origin until that repository attaches a `colander.wasm` release asset.
+
+Every origin passes the same module verification: the bytes must be a valid WebAssembly module, must
+import nothing, must export all eleven engine entry points, and must not export the removed
+`colander_last_panic`. A failure aborts before the destination file is written.
+
+When `COLANDER_WASM_SHA256` is set, the produced artifact must match it. The release script
+(`build:wasm:release`, used by `pnpm run release:pack`) requires that digest for **every** origin:
+the crate origin that carried an in-code digest is gone, so a release artifact has to be pinned to
+bytes someone verified. An unset digest means an unset variable; an absent optional value is an
+empty string, never an implicit "trust me".
+
+## Support matrix
+
+Runtime and development support are intentionally distinct:
+
+| Surface                    | Runtime Node | Development toolchain                                                 |
+| -------------------------- | ------------ | --------------------------------------------------------------------- |
+| Three publishable packages | `>=20.19.0`  | pnpm `12.3.4`; Vite+ `1.0.0-rc.0` (Vite 8 / Vitest 5); TypeScript 5.9 |
+| Nest example               | `>=20.19.0`  | pnpm `12.3.4`; Nest 12; its locked Vitest 4 toolchain                 |
+| React example              | `>=20.19.0`  | pnpm `12.3.4`; Vite 8; Vitest 5; TypeScript 6                         |
+| Packed consumer            | `>=20.19.0`  | pnpm `12.3.4`; TypeScript 5.9                                         |
+
+The root development engine is Node `^22.18.0 || ^24.11.0 || >=26.0.0`; the lower runtime range
+describes the published package contract, not the older Node versions accepted by every development
+tool.
+
+## Dependency direction
 
 ```text
-315c951f0b0e865a00b5a3eaa5e5caf1a5a4fdf41de387d8253cb3d3df9ab2ea
+colander-browser ──workspace:*──> colander
+colander-browser ──workspace:*──> colander-client (neutral error contracts)
+colander-client                   (no core, React, HTTP, or browser dependency)
 ```
 
-It uses the npm `tar` development dependency for a non-writing archive validation pass and a
-filtered extraction rooted in a fresh temporary directory. It then builds `wasm32-unknown-unknown`
-in release mode, validates that the module has no imports and exposes the documented `colander_*`
-ABI, and copies only `colander.wasm` into this package. The temporary directory is always removed.
-The published crate and source are available at the
-[crates.io listing](https://crates.io/crates/colander/0.1.0) and
-[GitHub repository](https://github.com/ailuracollective/colander).
+`colander.load()` and the WASM file belong only to `@ailura/colander`. The client package never
+imports that core. React uses the browser package for direct WASM lifecycle behavior and keeps only
+its HTTP source-specific adapter in the example.
 
-The checked-in artifact is 1,494,683 bytes with SHA-256
-`f82c4d7bc749be8e584bd98540557937f2770b9cf780921334808825effb5d7c`.
+## Artifact ownership and troubleshooting
 
-## Tests and packaging
+| Symptom                                                    | Action                                                                                                                                        |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dist/index.js` or `dist/index.d.ts` missing while packing | Run `pnpm run pack`; its `prepack` lifecycle cleans and rebuilds `dist`, then validates the archive.                                          |
+| `wasm/colander.wasm` missing                               | Restore/build the core artifact, then run `pnpm run pack`. Use `pnpm run release:pack` only when a release rebuild is intended.               |
+| `COLANDER_WASM_SOURCE` unset or rejected                   | The message names the accepted forms. There is no default: set a `path:`, `git:` or `github:` origin.                                         |
+| `colander.load()` names `COLANDER_WASM_PATH` and a path    | The Node-only engine-path override could not be read, and it never falls back to the packaged asset. Fix the path or unset the variable.      |
+| Engine SHA-256 mismatch                                    | The expected and actual digests are both printed. Rebuild from the intended origin or update `COLANDER_WASM_SHA256` to the reviewed artifact. |
+| Frozen example install rejects a tarball or digest         | Run `pnpm run pack`, then regenerate that example's lockfile with its offline install command; do not hand-edit the lockfile.                 |
+| A contract test fails on the frozen corpus                 | Use the checked-in corpus and `corpus.lock.json`; repair the reported file/digest/inventory issue before rerunning `pnpm run test:contract`.  |
+| Browser build warns about `node:fs/promises`               | This is the expected explicit Node branch externalized by Vite; the browser asset emission is covered by `pnpm run test:bundler`.             |
 
-Use `vpr` for project-defined workflows. It runs the scripts in `package.json` through Vite+, while
-`vp check`, `vp fmt`, `vp test`, and `vp pack` remain the underlying built-in commands.
+When an archive's content changes, regenerate each isolated lockfile with the same offline fix flow;
+`--fix-lockfile` is required for pnpm to recalculate a local tarball digest:
 
 ```bash
-pnpm exec vpr build:wasm
-pnpm exec vpr check
-pnpm exec vpr fmt:check
-pnpm exec vpr typecheck
-pnpm exec vpr test
-pnpm exec vpr pack
+pnpm --dir examples/nest-app install --offline --lockfile-only --force --fix-lockfile
+pnpm --dir examples/react-app install --offline --lockfile-only --force --fix-lockfile
+pnpm --dir poc install --offline --lockfile-only --force --fix-lockfile
 ```
 
-`test/vectors.test.ts` replays the frozen vectors from a sibling `colander` checkout when it is
-available. Set `COLANDER_VECTORS` to point at its `tests/golden/vectors/` directory when the
-checkout is elsewhere; the vector group skips if no directory is found.
+Generated `dist`, `node_modules`, versioned archives, and stable local archive aliases are ignored
+artifacts. `packages/colander/wasm/colander.wasm` is different: it is a checked-in package input
+required for offline packing. A deliberate `pnpm run release:pack` rebuild may replace that input,
+after which the release owner must verify the resulting artifact and archive.
 
-`test/binding.test.ts` covers the boundary: JSON escaping, heap growth, buffer release, typed
-envelopes, and WebAssembly trap retirement. `vpr pack` emits ESM JavaScript, declarations, and
-source maps under `dist/`; the public `dist/index.js` keeps the relative `../wasm/colander.wasm`
-URL.
+## Documentation and release notes
 
-## Why WebAssembly
+See [`RELEASE.md`](RELEASE.md) for the short publication checklist. Historical ODD task records
+remain historical; active setup instructions live in this README and the package/example READMEs.
 
-The core is a pure function library with no I/O, state or async work, so it compiles to a module
-with **zero imports**. One artifact works across browser, Node, Deno, Bun and Workers without a
-platform-specific native binary or an install-time build.
+The package manifests retain their existing MIT metadata, but this checkout does not contain an
+approved license file. The release owner must add the repository-approved license text before
+publishing; no license text is invented here.
